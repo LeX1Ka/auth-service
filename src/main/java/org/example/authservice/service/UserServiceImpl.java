@@ -3,9 +3,13 @@ package org.example.authservice.service;
 import lombok.RequiredArgsConstructor;
 import org.example.authservice.dto.UserRegistrationRequest;
 import org.example.authservice.entity.User;
+import org.example.authservice.exception.RegistrationException;
 import org.example.authservice.repository.UserRepository;
+import org.example.authservice.entity.Role;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +22,15 @@ public class UserServiceImpl implements UserService {
     public void register(UserRegistrationRequest userRegistrationRequest) {
         System.out.println("Registering user: " + userRegistrationRequest.getLogin());
 
+        if (userRepository.existsByLogin(userRegistrationRequest.getLogin()) || userRepository.existsByEmail(userRegistrationRequest.getEmail())) {
+            throw new RegistrationException("Email or login already exist");
+        }
         User user = new User();
-        if (userRepository.findByLogin(userRegistrationRequest.getLogin().isPresent())
+        user.setLogin(userRegistrationRequest.getLogin());
+        user.setEmail(userRegistrationRequest.getEmail());
+        user.setPassword(passwordEncoder.encode(userRegistrationRequest.getPassword()));
+        user.setRoles(Set.of(Role.GUEST));
+        userRepository.save(user);
+
     }
 }

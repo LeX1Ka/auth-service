@@ -11,5 +11,4 @@ public class UserRegistrationRequest {
     private String login;
     private String email;
     private String password;
-    private Set<String> roles;
 }
