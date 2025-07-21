@@ -1,10 +1,11 @@
 package org.example.authservice.dto;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
-public class UserRegistrationRequest {
+@Setter
+public class RoleChangeRequest {
     private String login;
-    private String email;
-    private String password;
+    private String newRole;
 }
