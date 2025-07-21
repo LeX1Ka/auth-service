@@ -1,13 +1,14 @@
 package org.example.authservice.service;
 
+import org.example.authservice.dto.RefreshTokenRequest;
 import org.example.authservice.dto.UserLoginRequest;
 import org.example.authservice.dto.UserRegistrationRequest;
+import org.example.authservice.dto.UserTokenResponse;
 
-import javax.naming.AuthenticationException;
 
 public interface UserService {
     void register(UserRegistrationRequest userRegistrationRequest);
-    void login(UserLoginRequest userLoginRequest);
+    UserTokenResponse login(UserLoginRequest userLoginRequest);
+    UserTokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest);
     void changeRole(String login, String newRole);
-
 }
