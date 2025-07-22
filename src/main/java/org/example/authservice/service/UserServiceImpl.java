@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Set;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,22 +25,35 @@ public class UserServiceImpl implements UserService {
     private final TokenService tokenService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailVerificationService emailVerificationService;
+
+    @Override
+    public boolean confirmRegistration(UserRegistrationRequest request, String code) {
+        if (!emailVerificationService.verify(request.getEmail(), code)) {
+            return false;
+        }
+
+        User user = new User();
+        user.setLogin(request.getLogin());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRoles(Set.of(Role.GUEST)); // или ADMIN, если по умолчанию
+        userRepository.save(user);
+
+        return true;
+    }
 
 
     @Override
     public void register(UserRegistrationRequest userRegistrationRequest) {
-        System.out.println("Registering user: " + userRegistrationRequest.getLogin());
-
-        if (userRepository.existsByLogin(userRegistrationRequest.getLogin()) || userRepository.existsByEmail(userRegistrationRequest.getEmail())) {
+        if (userRepository.existsByLogin(userRegistrationRequest.getLogin()) ||
+                userRepository.existsByEmail(userRegistrationRequest.getEmail())) {
             throw new RegistrationException("Email or login already exist");
         }
-        User user = new User();
-        user.setLogin(userRegistrationRequest.getLogin());
-        user.setEmail(userRegistrationRequest.getEmail());
-        user.setPassword(passwordEncoder.encode(userRegistrationRequest.getPassword()));
-        user.setRoles(Set.of(Role.ADMIN));
-        userRepository.save(user);
 
+        emailVerificationService.sendVerificationCode(userRegistrationRequest.getEmail());
+
+        System.out.println("Verification code sent to: " + userRegistrationRequest.getEmail());
     }
 
     @Override
@@ -58,7 +70,7 @@ public class UserServiceImpl implements UserService {
         }
         System.out.println("Login successful for user: " + user.getLogin());
 
-        userTokenResponse.setAccessToken(tokenService.generateAccessToken(user).getId().toString());
+        userTokenResponse.setAccessToken(tokenService.generateAccessToken(user).getToken());
         userTokenResponse.setRefreshToken(tokenService.generateRefreshToken(user).getToken());
 
         return userTokenResponse;
@@ -90,4 +102,5 @@ public class UserServiceImpl implements UserService {
     public void changeRole(String login, String newRole) {
 
     }
+
 }
