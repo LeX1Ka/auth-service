@@ -119,7 +119,7 @@ mvn spring-boot:run
 ```
 
 >  Доступно только для пользователей с ролью `ADMIN`.
-> Для тестирования можно временно закомментировать проверку роли в `UserServiceImpl#changeRole`.
+> Для тестирования можно временно закомментировать проверку роли в `UserServiceImpl метод changeRole() и AuthController @PreAuthorisation`, выделены комментариями.
 
 ---
 

@@ -111,9 +111,10 @@ public class UserServiceImpl implements UserService {
         User currentUser = userRepository.findByLogin(currentLogin)
                 .orElseThrow(() -> new IllegalStateException("Текущий пользователь не найден"));
 
-//        if (!currentUser.getRoles().contains(Role.ADMIN)) {
-//            throw new SecurityException("Недостаточно прав: требуется роль ADMIN");
-//        }
+        //Для теста комментировать этот блок 115-117 строки
+        if (!currentUser.getRoles().contains(Role.ADMIN)) {
+            throw new SecurityException("Недостаточно прав: требуется роль ADMIN");
+        }
 
         User targetUser = userRepository.findByLogin(targetLogin)
                 .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден: " + targetLogin));

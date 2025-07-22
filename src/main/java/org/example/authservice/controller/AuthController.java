@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.authservice.dto.*;
 import org.example.authservice.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -42,7 +43,8 @@ public class AuthController {
     }
 
     @PostMapping("/change-role")
-    //@PreAuthorize("hasRole('ADMIN')")
+    //Для теста комментировать 47 строку
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> changeRole(@RequestBody RoleChangeRequest request) {
         userService.changeRole(request.getLogin(), request.getNewRole());
         return ResponseEntity.ok("Роль успешно изменена.");
