@@ -37,7 +37,7 @@ public class UserServiceImpl implements UserService {
         user.setLogin(request.getLogin());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRoles(Set.of(Role.GUEST)); // или ADMIN, если по умолчанию
+        user.setRoles(Set.of(Role.GUEST));
         userRepository.save(user);
 
         return true;
@@ -48,12 +48,12 @@ public class UserServiceImpl implements UserService {
     public void register(UserRegistrationRequest userRegistrationRequest) {
         if (userRepository.existsByLogin(userRegistrationRequest.getLogin()) ||
                 userRepository.existsByEmail(userRegistrationRequest.getEmail())) {
-            throw new RegistrationException("Email or login already exist");
+            throw new RegistrationException("Такой Email или Login уже существует");
         }
 
         emailVerificationService.sendVerificationCode(userRegistrationRequest.getEmail());
 
-        System.out.println("Verification code sent to: " + userRegistrationRequest.getEmail());
+        System.out.println("Код подтверждения отправлен на: " + userRegistrationRequest.getEmail());
     }
 
     @Override
@@ -63,12 +63,12 @@ public class UserServiceImpl implements UserService {
         String password = userLoginRequest.getPassword();
 
         User user = userRepository.findByLogin(login)
-                .orElseThrow(() -> new LoginException("Invalid login"));
+                .orElseThrow(() -> new LoginException("Неверный логин"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new LoginException("Invalid password");
+            throw new LoginException("Неверный пароль");
         }
-        System.out.println("Login successful for user: " + user.getLogin());
+        System.out.println("Вход выполнен для: " + user.getLogin());
 
         userTokenResponse.setAccessToken(tokenService.generateAccessToken(user).getToken());
         userTokenResponse.setRefreshToken(tokenService.generateRefreshToken(user).getToken());
@@ -80,10 +80,10 @@ public class UserServiceImpl implements UserService {
     public UserTokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
         String refreshToken = refreshTokenRequest.getRefreshToken();
         Token token = tokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new LoginException("Ivalid refresh token"));
+                .orElseThrow(() -> new LoginException("Неверный refresh token"));
 
         if (token.getExpiresAt().isBefore(LocalDateTime.now()) || token.isRevoked()) {
-            throw new LoginException("Token is expired or revoked");
+            throw new LoginException("Token истек или отозван");
         }
 
         User user = token.getUser();

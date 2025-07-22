@@ -40,7 +40,6 @@ public class EmailVerificationService {
             helper.setSubject("Код подтверждения регистрации");
             helper.setText("Ваш код подтверждения: " + code, true);
             mailSender.send(message);
-            System.out.println("Код отправлен на email: " + email);
         } catch (Exception e) {
             System.err.println("Ошибка при отправке письма: " + e.getMessage());
         }

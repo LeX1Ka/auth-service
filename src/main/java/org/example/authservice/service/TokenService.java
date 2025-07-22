@@ -44,7 +44,7 @@ public class TokenService {
 
     public void revokeToken(String tokenValue) {
         Token token = tokenRepository.findByToken(tokenValue)
-                .orElseThrow(() -> new IllegalArgumentException("Token not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Токен не найден"));
 
         token.setRevoked(true);
         tokenRepository.save(token);
