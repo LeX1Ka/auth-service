@@ -12,4 +12,5 @@ public interface UserService {
     UserTokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest);
     void changeRole(String login, String newRole);
     boolean confirmRegistration(UserRegistrationRequest request, String code);
+    void logout(String tokenValue);
 }

@@ -12,6 +12,7 @@ import org.example.authservice.exception.RegistrationException;
 import org.example.authservice.repository.TokenRepository;
 import org.example.authservice.repository.UserRepository;
 import org.example.authservice.entity.Role;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -78,29 +79,71 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserTokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
-        String refreshToken = refreshTokenRequest.getRefreshToken();
-        Token token = tokenRepository.findByToken(refreshToken)
+        String oldRefreshValue = refreshTokenRequest.getRefreshToken();
+
+        Token oldRefresh = tokenRepository.findByToken(oldRefreshValue)
                 .orElseThrow(() -> new LoginException("Неверный refresh token"));
 
-        if (token.getExpiresAt().isBefore(LocalDateTime.now()) || token.isRevoked()) {
+        if (oldRefresh.getExpiresAt().isBefore(LocalDateTime.now()) || oldRefresh.isRevoked()) {
             throw new LoginException("Token истек или отозван");
         }
 
-        User user = token.getUser();
+        User user = oldRefresh.getUser();
+
+        oldRefresh.setRevoked(true);
+        tokenRepository.save(oldRefresh);
 
         Token newAccessToken = tokenService.generateAccessToken(user);
         Token newRefreshToken = tokenService.generateRefreshToken(user);
 
-        UserTokenResponse userTokenResponse = new UserTokenResponse();
-        userTokenResponse.setAccessToken(newAccessToken.getToken());
-        userTokenResponse.setRefreshToken(newRefreshToken.getToken());
+        UserTokenResponse response = new UserTokenResponse();
+        response.setAccessToken(newAccessToken.getToken());
+        response.setRefreshToken(newRefreshToken.getToken());
 
-        return userTokenResponse;
+        return response;
     }
+
 
     @Override
-    public void changeRole(String login, String newRole) {
+    public void changeRole(String targetLogin, String newRoleName) {
+        String currentLogin = SecurityContextHolder.getContext().getAuthentication().getName();
 
+        User currentUser = userRepository.findByLogin(currentLogin)
+                .orElseThrow(() -> new IllegalStateException("Текущий пользователь не найден"));
+
+//        if (!currentUser.getRoles().contains(Role.ADMIN)) {
+//            throw new SecurityException("Недостаточно прав: требуется роль ADMIN");
+//        }
+
+        User targetUser = userRepository.findByLogin(targetLogin)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден: " + targetLogin));
+
+        Role newRole = parseRole(newRoleName);
+
+        targetUser.setRoles(new java.util.HashSet<>(Set.of(newRole)));
+
+        userRepository.save(targetUser);
     }
+
+
+    private Role parseRole(String roleName) {
+        try {
+            return Role.valueOf(roleName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    "Недопустимая роль: " + roleName + ". Доступные: ADMIN, PREMIUM_USER, GUEST"
+            );
+        }
+    }
+
+
+    @Override
+    public void logout(String tokenValue) {
+        tokenRepository.findByToken(tokenValue).ifPresent(token -> {
+            token.setRevoked(true);
+            tokenRepository.save(token);
+        });
+    }
+
 
 }
